@@ -1,0 +1,178 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GlidingManager : MonoBehaviour
+{
+
+    [SerializeField] Animator animator; 
+
+    private Camera CameraMain;
+    private Rigidbody2D rb;
+    private int n = 0;
+    private float lastTime;
+    private bool glidingActivated = false;
+
+    private bool glidingAbility;
+
+
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        n = 0;
+        lastTime = -1.0f;
+        CameraMain = Camera.main;
+
+        glidingAbility = gameObject.GetComponent<AbilitiesController>().gliding;
+
+        ActivateCharacterController();
+       
+       
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        //get the gliding status
+        glidingAbility = gameObject.GetComponent<AbilitiesController>().gliding;
+
+        if (glidingActivated && !glidingAbility)
+        {
+            ActivateCharacterController();
+            animator.SetBool("IsGliding", false);
+            animator.SetBool("IsJumping", true);
+        }
+        
+        if (Input.GetButtonDown("Jump"))
+        {
+            print("JUMP PRESSED "  + lastTime);
+            if (Time.time - lastTime < 0.2f )
+            {
+                lastTime = Time.time;
+                Debug.Log("____DOUBLE____");
+                if (!glidingActivated && glidingAbility)
+                {
+                    animator.SetBool("IsGliding", true);
+                    animator.SetBool("IsJumping", false);
+                    Debug.Log("Glide");
+                    ActivateGliding();
+                    //if (animator.GetBool("IsGliding") == false && animator.GetBool ("IsJumping") == true)
+                    //{
+                    //    animator.SetBool("IsJumping", false);
+                    //    animator.SetBool("IsGliding", true);
+
+                    //} 
+
+
+                } else  if (glidingActivated)
+                {
+                    Debug.Log("Character");
+                    ActivateCharacterController();
+
+                    animator.SetBool("IsGliding", false);
+                    animator.SetBool("IsJumping", true);
+                }
+
+               
+            }
+            else
+            {
+                lastTime = Time.time;
+            }
+            Debug.Log("Time:" + lastTime);
+            //Debug.Log("Tap " + ++n);
+
+        }
+      
+    }
+
+    //private void switchActivatedComponents (Object component1, Component component2)
+    //{
+    //    this.gameObject.GetComponent<component1>()
+    //}
+
+    private void ActivateGliding()
+    {
+        //set normal movement cotroller to not active
+        this.gameObject.GetComponent<Character2DController>().enabled = false;
+        //set gliding script to active 
+        this.gameObject.GetComponent<Gliding_NoRotation>().enabled = true;
+        //cancels any current movement from the last activated script
+
+        rb.freezeRotation = true;
+        rb.velocity = Vector3.zero;
+        rb.gravityScale = 0;
+
+        glidingActivated = true;
+
+        // rotate player to the direction of gliding
+        transform.localRotation = Quaternion.Euler(0, 0, 0);
+
+        //change cameraFollowGlide
+        ActivateCameraFollowGlide();
+        EnableScreenBoundaries();
+        EnableGlidingCollisions();
+        EnableGlidingPlayerDeath();
+    }
+
+    private void ActivateCharacterController()
+    {
+        //set gliding script to active 
+        this.gameObject.GetComponent<Gliding_NoRotation>().enabled = false;
+        //set normal movement cotroller to not active
+        this.gameObject.GetComponent<Character2DController>().enabled = true;
+        //cancels any current movement from the last activated script
+        rb.velocity = Vector3.zero;
+        //gravity needs to be introduced back maybe we need to add it to the script of Vlad
+        rb.gravityScale = 1;
+        glidingActivated = false;
+
+        //change cameraFollow
+        ActivateCameraFollow();
+        DisableScreenBoundaries();
+        //DisableGlidingCollisions();
+        DisableGlidingPlayerDeath();
+
+    }
+
+    private void EnableGlidingPlayerDeath()
+    {
+        this.gameObject.GetComponent<PlayerDeath>().enabled = true;
+    }
+
+    private void DisableGlidingPlayerDeath()
+    {
+        this.gameObject.GetComponent<PlayerDeath>().enabled = false;
+    }
+
+    private void EnableGlidingCollisions()
+    {
+        this.gameObject.GetComponent<collisionsPlayer>().enabled = true;
+    }
+
+    private void DisableGlidingCollisions()
+    {
+        this.gameObject.GetComponent<collisionsPlayer>().enabled = false;
+    }
+    private void EnableScreenBoundaries()
+    {
+        this.gameObject.GetComponent<ScreenBoundaries>().enabled = true;
+    }
+    private void DisableScreenBoundaries()
+    {
+        this.gameObject.GetComponent<ScreenBoundaries>().enabled = false;
+    }
+    private void ActivateCameraFollow()
+    {
+        CameraMain.GetComponent<CameraFollow>().enabled = true;
+        CameraMain.GetComponent<CameraFollowGlide>().enabled = false;
+    }
+
+    private void ActivateCameraFollowGlide()
+    {
+        CameraMain.GetComponent<CameraFollow>().enabled = false;
+        CameraMain.GetComponent<CameraFollowGlide>().enabled = true;
+    }
+}

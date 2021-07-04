@@ -1,0 +1,8 @@
+#.................... If something goes wrong in my local project
+git restore <folder>
+
+#.................... To edit credentials file
+git config --global --edit
+
+#.................... To override local file when it has been changed on git
+git fetch 
